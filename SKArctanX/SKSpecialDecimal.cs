@@ -12,6 +12,9 @@ namespace SKArctanX
     /// </summary>
     class SKSpecialDecimal
     {
+        /// <summary>
+        /// 默认的构造函数，此时不表示任何数，有效位数为零
+        /// </summary>
         public SKSpecialDecimal() { }
         /// <summary>
         /// 用指定的double数初始化高精度小数，默认精度15位
@@ -20,7 +23,7 @@ namespace SKArctanX
         /// <param name="x"></param>
         public SKSpecialDecimal(double x, int precision = 15)
         {
-            reset(x);
+            reset(x,precision);
         }
         /// <summary>
         /// 用指定的int数初始化高精度小数，默认精度为9位
@@ -29,7 +32,7 @@ namespace SKArctanX
         /// <param name="x"></param>
         public SKSpecialDecimal(int x, int precision = 9)
         {
-            reset(x);
+            reset(x,precision);
         }
         /// <summary>
         /// 用指定的string初始化高精度小数
@@ -67,24 +70,7 @@ namespace SKArctanX
         /// <param name="x"></param>
         public void reset(double x, int precision = 15)
         {
-            clear();
-            if (x < 0) positive = false;
-            else if (x == 0)
-            {
-                exp_10 = 0;
-                data.Add(0);
-                return;
-            }
-            x = Math.Abs(x);
-            exp_10 = Convert.ToInt32(Math.Floor(Math.Log10(x)));
-            double tmp = (x * Math.Pow(10, -Math.Floor(Math.Log10(x))));
-            for (int i = 0; i < precision; i++)
-            {
-                if (i >= 15)
-                    data.Add(0);
-                else
-                    data.Add(Convert.ToByte(Math.Floor(tmp * Math.Pow(10, i)) % 10));
-            }
+            private_reset(x, precision, 15);
         }
         /// <summary>
         /// 用指定的int数初始化高精度小数，默认精度为9位
@@ -93,23 +79,7 @@ namespace SKArctanX
         /// <param name="x"></param>
         public void reset(int x, int precision = 9)
         {
-            clear();
-            if (x < 0) positive = false;
-            else if (x == 0)
-            {
-                exp_10 = 0;
-                data.Add(0);
-                return;
-            }
-            exp_10 = Convert.ToInt32(Math.Floor(Math.Log10(x)));
-            double tmp = (x * Math.Pow(10, -Math.Floor(Math.Log10(x))));
-            for (int i = 0; i < precision; i++)
-            {
-                if (i >= 9)
-                    data.Add(0);
-                else
-                    data.Add(Convert.ToByte(Math.Floor(tmp * Math.Pow(10, i)) % 10));
-            }
+            private_reset((double)x, precision, 9);
         }
         /// <summary>
         /// 用指定的string初始化高精度小数
@@ -189,6 +159,14 @@ namespace SKArctanX
             }
         }
         /// <summary>
+        /// 乘上10的次幂
+        /// </summary>
+        /// <param name="times">10的幂次</param>
+        public void mul_10(int times)
+        {
+            exp_10 += times;
+        }
+        /// <summary>
         /// 获得有效位数
         /// </summary>
         /// <returns></returns>
@@ -226,7 +204,7 @@ namespace SKArctanX
                     return 0;
                 return data[index];
             }
-            set
+            private set
             {
                 if (value > 9)
                     throw new Exception("某一位的值不应该超过9");
@@ -277,6 +255,10 @@ namespace SKArctanX
             return 0;
         }
 
+        /// <summary>
+        /// 按科学计数法的方式输出字符串
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             string ans = string.Empty;
@@ -332,23 +314,51 @@ namespace SKArctanX
                 b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
             else//以b的精度为准
                 a_copy.cut(a_copy.get_digit() - b_min_bit + a_min_bit);
-            return Add(a_copy,b_copy);
+            return add(a_copy,b_copy);
         }
+        /// <summary>
+        /// 加法，有效位数取决于绝对误差最大的数
+        /// <para>例：1.001+100.1=101.1</para>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator +(SKSpecialDecimal a, double b)
         {
             SKSpecialDecimal bb = new SKSpecialDecimal(b);
             return a + bb;
         }
+        /// <summary>
+        /// 加法，有效位数取决于绝对误差最大的数
+        /// <para>例：1.001+100.1=101.1</para>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator +(double a, SKSpecialDecimal b)
         {
             SKSpecialDecimal aa = new SKSpecialDecimal(a);
             return aa + b;
         }
+        /// <summary>
+        /// 加法，有效位数取决于绝对误差最大的数
+        /// <para>例：1.001+100.1=101.1</para>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator +(SKSpecialDecimal a, int b)
         {
             SKSpecialDecimal bb = new SKSpecialDecimal(b);
             return a + bb;
         }
+        /// <summary>
+        /// 加法，有效位数取决于绝对误差最大的数
+        /// <para>例：1.001+100.1=101.1</para>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator +(int a, SKSpecialDecimal b)
         {
             SKSpecialDecimal aa = new SKSpecialDecimal(a);
@@ -367,21 +377,45 @@ namespace SKArctanX
             b_copy.inverse();
             return (a + b_copy);
         }
+        /// <summary>
+        /// 减法，有效位数与加法类似，取决于绝对误差最大的数
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator -(SKSpecialDecimal a, double b)
         {
             SKSpecialDecimal bb = new SKSpecialDecimal(b);
             return a - bb;
         }
+        /// <summary>
+        /// 减法，有效位数与加法类似，取决于绝对误差最大的数
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator -(double a, SKSpecialDecimal b)
         {
             SKSpecialDecimal aa = new SKSpecialDecimal(a);
             return aa - b;
         }
+        /// <summary>
+        /// 减法，有效位数与加法类似，取决于绝对误差最大的数
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator -(SKSpecialDecimal a, int b)
         {
             SKSpecialDecimal bb = new SKSpecialDecimal(b);
             return a - bb;
         }
+        /// <summary>
+        /// 减法，有效位数与加法类似，取决于绝对误差最大的数
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static SKSpecialDecimal operator -(int a, SKSpecialDecimal b)
         {
             SKSpecialDecimal aa = new SKSpecialDecimal(a);
@@ -394,7 +428,7 @@ namespace SKArctanX
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static SKSpecialDecimal Add(SKSpecialDecimal a, SKSpecialDecimal b)
+        private static SKSpecialDecimal add(SKSpecialDecimal a, SKSpecialDecimal b)
         {
 
             if (a.get_digit() == 0)
@@ -453,12 +487,66 @@ namespace SKArctanX
             return ans;
         }
         /// <summary>
+        /// 乘上一个一位数，未考虑精度取舍问题
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private static SKSpecialDecimal mul_single(SKSpecialDecimal a, byte b)
+        {
+            if (b > 9)
+                throw new Exception("必须是一位数啊！");
+            if (a.get_digit() == 0 ||(a.get_digit() == 1 && a[0] == (byte)0))
+                return new SKSpecialDecimal(a);
+            SKSpecialDecimal ret = new SKSpecialDecimal();
+            byte carry = 0;
+            for (int i = a.get_digit() - 1; i > -1; i--)
+            {
+                byte tmp = (byte)(a[i] * b+carry);
+                ret[i + 1] = (byte)(tmp % 10);
+                carry = (byte)(tmp / 10);
+            }
+            ret[0] = carry;
+            ret.fix();
+            ret.exp_10 = (carry == 0) ? a.get_exp() : (a.get_exp() + 1);
+            return ret;
+        }
+
+        /// <summary>
+        /// reset(double or int)的内部实现
+        /// </summary>
+        /// <param name="x">要设定的数</param>
+        /// <param name="precision">精度</param>
+        /// <param name="threshold">超过threshold赋值为零</param>
+        private void private_reset(double x, int precision, int threshold)
+        {
+            clear();
+            if (x < 0) positive = false;
+            else if (x == 0)
+            {
+                exp_10 = 0;
+                data.Add(0);
+                return;
+            }
+            x = Math.Abs(x);
+            exp_10 = Convert.ToInt32(Math.Floor(Math.Log10(x)));
+            double tmp = (x * Math.Pow(10, -Math.Floor(Math.Log10(x))));
+            for (int i = 0; i < precision; i++)
+            {
+                if (i >= threshold)
+                    data.Add(0);
+                else
+                    data.Add(Convert.ToByte(Math.Floor(tmp * Math.Pow(10, i)) % 10));
+            }
+        }
+
+        /// <summary>
         /// 存储数据，其长度表示有效位数，高位在前
         /// <para>科学计数法，十进制</para>
         /// </summary>
         private List<byte> data = new List<byte>();
         /// <summary>
-        /// 表示10的几次方
+        /// 表示10的幂次
         /// </summary>
         private int exp_10 = 0;
         /// <summary>

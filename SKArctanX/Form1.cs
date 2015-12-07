@@ -24,13 +24,10 @@ namespace SKArctanX
             SKSpecialDecimal c3 = new SKSpecialDecimal("-1.00100000");
             SKSpecialDecimal c4 = new SKSpecialDecimal("-100.1");
             SKSpecialDecimal c5 = new SKSpecialDecimal(12.3, 30);
-            c1.reset(2.333, 100);
 
             textBox1.Text += c1.ToString();
             textBox1.Text += "\r\n";
-            textBox1.Text += c5.ToString();
-            textBox1.Text += "\r\n";
-            textBox1.Text += (c1 - c5).ToString();
+            textBox1.Text += (SKSpecialDecimal.mul_single(c1,9)).ToString();
             textBox1.Text += "\r\n";
 
             textBox1.Text += (c1 + c2).ToString();
