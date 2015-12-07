@@ -159,11 +159,24 @@ namespace SKArctanX
             }
         }
         /// <summary>
+        /// 返回这个数是否是零
+        /// </summary>
+        /// <param name="should_fix">是否自动fix</param>
+        /// <returns></returns>
+        public bool is_zero(bool should_fix = true)
+        {
+            if(should_fix)
+                fix();
+            return (get_digit() == 1 && this[0] == (byte)0);
+        }
+        /// <summary>
         /// 乘上10的次幂
         /// </summary>
         /// <param name="times">10的幂次</param>
         public void mul_10(int times)
         {
+            if (get_digit() != 0 || is_zero())
+                return;
             exp_10 += times;
         }
         /// <summary>
@@ -496,7 +509,7 @@ namespace SKArctanX
         {
             if (b > 9)
                 throw new Exception("必须是一位数啊！");
-            if (a.get_digit() == 0 ||(a.get_digit() == 1 && a[0] == (byte)0))
+            if (a.get_digit() == 0 || a.is_zero())
                 return new SKSpecialDecimal(a);
             SKSpecialDecimal ret = new SKSpecialDecimal();
             byte carry = 0;

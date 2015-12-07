@@ -27,8 +27,6 @@ namespace SKArctanX
 
             textBox1.Text += c1.ToString();
             textBox1.Text += "\r\n";
-            textBox1.Text += (SKSpecialDecimal.mul_single(c1,9)).ToString();
-            textBox1.Text += "\r\n";
 
             textBox1.Text += (c1 + c2).ToString();
             textBox1.Text += "\r\n";
