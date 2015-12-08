@@ -1,4 +1,8 @@
-﻿using System;
+﻿//SKSpecialDecimal
+//Author: ShadowK
+//E-mail: zhu.shadowk@gmail.com
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,16 +47,12 @@ namespace SKArctanX
             reset(x);
         }
         /// <summary>
-        /// 生成一个新的高精度数，复制
+        /// 用指定的高精度数初始化自己
         /// </summary>
         /// <param name="origin"></param>
         public SKSpecialDecimal(SKSpecialDecimal origin)
         {
-            clear();
-            foreach (byte tmp in origin.data)
-                data.Add(tmp);
-            positive = origin.positive;
-            exp_10 = origin.exp_10;
+            reset(origin);
         }
         /// <summary>
         /// 清除data、positive与exp_10
@@ -114,7 +114,19 @@ namespace SKArctanX
             fix();
         }
         /// <summary>
-        /// 裁剪有效位数
+        /// 用指定的高精度数初始化自己
+        /// </summary>
+        /// <param name="another"></param>
+        public void reset(SKSpecialDecimal another)
+        {
+            clear();
+            foreach (byte tmp in another.data)
+                data.Add(tmp);
+            positive = another.positive;
+            exp_10 = another.exp_10;
+        }
+        /// <summary>
+        /// 裁剪有效位数，四舍六入五取偶
         /// </summary>
         /// <param name="x">剩余的有效位数</param>
         public void cut(int x)
@@ -124,7 +136,41 @@ namespace SKArctanX
             if (x > data.Count)
                 throw (new Exception("Cut To Long Exception"));
             if (x < data.Count)
-                data.RemoveRange(x, data.Count - x);
+            {
+                if (x == 0)
+                    clear();
+                else if (data[x] < 5)
+                    data.RemoveRange(x, data.Count - x);
+                else if (data[x] > 5)
+                {
+                    //进位了，悲剧
+                    upgrade(x);
+                }
+                else
+                {
+                    //5“取偶”
+                    bool all_zero = true;
+                    for(int i = x + 1;i < get_digit();i++)
+                        if (this[i] != 0)
+                        {
+                            all_zero = false;
+                            break;
+                        }
+                    if (all_zero)
+                    {
+                        if (data[x - 1] % 2 == 0)//前边是偶数
+                            data.RemoveRange(x, data.Count - x);
+                        else//前边是奇数
+                        {
+                            upgrade(x);
+                        }
+                    }
+                    else
+                    {
+                        upgrade(x);
+                    }
+                }
+            }
         }
         /// <summary>
         /// 取反
@@ -331,11 +377,12 @@ namespace SKArctanX
             //越小越好，表示末位所在的位置
             int a_min_bit = a_copy.exp_10 - a_copy.get_digit() + 1;
             int b_min_bit = b_copy.exp_10 - b_copy.get_digit() + 1;
+            SKSpecialDecimal ret = add(a_copy, b_copy);
             if (a_min_bit > b_min_bit)//以a的精度为准
-                b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
+                ret.cut(b_copy.get_digit() - a_min_bit + b_min_bit);//b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
             else//以b的精度为准
-                a_copy.cut(a_copy.get_digit() - b_min_bit + a_min_bit);
-            return add(a_copy,b_copy);
+                ret.cut(a_copy.get_digit() - b_min_bit + a_min_bit);
+            return ret;
         }
         /// <summary>
         /// 加法，有效位数取决于绝对误差最大的数
@@ -631,6 +678,18 @@ namespace SKArctanX
             return ret;
         }
         /// <summary>
+        /// 不考虑精度、误差情况下的除法，会一直除到两者的有效位数之和
+        /// <para>a除以b</para>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private static SKSpecialDecimal div(SKSpecialDecimal a, SKSpecialDecimal b)
+        {
+            return new SKSpecialDecimal();
+        }
+
+        /// <summary>
         /// reset(double or int)的内部实现
         /// </summary>
         /// <param name="x">要设定的数</param>
@@ -656,6 +715,25 @@ namespace SKArctanX
                 else
                     data.Add(Convert.ToByte(Math.Floor(tmp * Math.Pow(10, i)) % 10));
             }
+        }
+
+        /// <summary>
+        /// 在(x-1)位处发生进位，同时截取x位有效数字
+        /// </summary>
+        /// <param name="x"></param>
+        private void upgrade(int x)
+        {
+            if (x < 2)
+                return;
+            data.RemoveRange(x, data.Count - x);
+            SKSpecialDecimal _tmp = new SKSpecialDecimal(this);
+            SKSpecialDecimal _add = new SKSpecialDecimal();
+            _add[x - 1] = 1;
+            _add.exp_10 = _tmp.get_exp();
+            _tmp = add(_tmp, _add);
+            if (_tmp.get_digit() > get_digit())//进位导致位数增加了
+                _tmp.cut(get_digit());//本次cut一定不会导致进位了
+            reset(_tmp);
         }
 
         /// <summary>
