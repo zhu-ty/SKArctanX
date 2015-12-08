@@ -111,6 +111,7 @@ namespace SKArctanX
                 }
                 data.Add(tmp);
             }
+            fix();
         }
         /// <summary>
         /// 裁剪有效位数
@@ -137,7 +138,13 @@ namespace SKArctanX
         /// </summary>
         public void fix()
         {
-            if (get_digit() < 2)
+            if (get_digit() == 1 && this[0] == 0 && get_exp() != 0)//零
+            {
+                exp_10 = 0;
+                positive = true;
+                return;
+            }
+            else if (get_digit() < 2)
                 return;
             int zero_count = 0;
             foreach (byte c in data)
@@ -151,6 +158,7 @@ namespace SKArctanX
             {
                 data.RemoveRange(1, data.Count - 1);
                 exp_10 = 0;
+                positive = true;
             }
             else
             {
@@ -161,11 +169,11 @@ namespace SKArctanX
         /// <summary>
         /// 返回这个数是否是零
         /// </summary>
-        /// <param name="should_fix">是否自动fix</param>
+        /// <param name="auto_fix">是否自动fix</param>
         /// <returns></returns>
-        public bool is_zero(bool should_fix = true)
+        public bool is_zero(bool auto_fix = true)
         {
-            if(should_fix)
+            if (auto_fix)
                 fix();
             return (get_digit() == 1 && this[0] == (byte)0);
         }
@@ -175,7 +183,7 @@ namespace SKArctanX
         /// <param name="times">10的幂次</param>
         public void mul_10(int times)
         {
-            if (get_digit() != 0 || is_zero())
+            if (get_digit() == 0 || is_zero())
                 return;
             exp_10 += times;
         }
@@ -436,6 +444,66 @@ namespace SKArctanX
         }
 
         /// <summary>
+        /// 乘法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator *(SKSpecialDecimal a, SKSpecialDecimal b)
+        {
+            if (a.get_digit() == 0 || b.get_digit() == 0)
+                return new SKSpecialDecimal();
+            int less = Math.Min(a.get_digit(), b.get_digit());
+            SKSpecialDecimal ret = mul(a, b);
+            ret.cut(less);
+            return ret;
+        }
+        /// <summary>
+        /// 乘法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator *(SKSpecialDecimal a, double b)
+        {
+            SKSpecialDecimal bb = new SKSpecialDecimal(b);
+            return a * bb;
+        }
+        /// <summary>
+        /// 乘法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator *(double a, SKSpecialDecimal b)
+        {
+            SKSpecialDecimal aa = new SKSpecialDecimal(a);
+            return aa * b;
+        }
+        /// <summary>
+        /// 乘法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator *(SKSpecialDecimal a, int b)
+        {
+            SKSpecialDecimal bb = new SKSpecialDecimal(b);
+            return a * bb;
+        }
+        /// <summary>
+        /// 乘法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator *(int a, SKSpecialDecimal b)
+        {
+            SKSpecialDecimal aa = new SKSpecialDecimal(a);
+            return aa * b;
+        }
+
+        /// <summary>
         /// 不考虑精度、误差情况下的加法
         /// </summary>
         /// <param name="a"></param>
@@ -521,10 +589,47 @@ namespace SKArctanX
             }
             ret[0] = carry;
             ret.fix();
-            ret.exp_10 = (carry == 0) ? a.get_exp() : (a.get_exp() + 1);
+            if(!ret.is_zero())
+                ret.exp_10 = (carry == 0) ? a.get_exp() : (a.get_exp() + 1);
             return ret;
         }
-
+        /// <summary>
+        /// 不考虑精度、误差情况下的乘法
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private static SKSpecialDecimal mul(SKSpecialDecimal a, SKSpecialDecimal b)
+        {
+            if (a.get_digit() == 0)
+                return new SKSpecialDecimal(b);
+            else if (b.get_digit() == 0)
+                return new SKSpecialDecimal(a);
+            else if (a.is_zero() || b.is_zero())
+                return new SKSpecialDecimal(0);
+            SKSpecialDecimal ret = new SKSpecialDecimal(0);
+            SKSpecialDecimal longer, shorter;
+            if (a.get_digit() > b.get_digit())
+            {
+                longer = a;
+                shorter = b;
+            }
+            else
+            {
+                longer = b;
+                shorter = a;
+            }
+            for (int i = 0; i < shorter.get_digit(); i++)
+            {
+                SKSpecialDecimal tmp = mul_single(longer, shorter[i]);
+                tmp.mul_10(shorter.get_exp() - i);
+                ret = add(ret, tmp);
+            }
+            ret.fix();
+            ret.positive = (a.get_positive() == b.get_positive());
+            ret.exp_10 = a.get_exp() + b.get_exp();
+            return ret;
+        }
         /// <summary>
         /// reset(double or int)的内部实现
         /// </summary>
