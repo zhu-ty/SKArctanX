@@ -19,15 +19,12 @@ namespace SKArctanX
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            SKSpecialDecimal c1 = new SKSpecialDecimal("49.00");
-            SKSpecialDecimal c2 = new SKSpecialDecimal("50.99");
-            SKSpecialDecimal c3 = new SKSpecialDecimal("-1.00100");
-            SKSpecialDecimal c4 = new SKSpecialDecimal("-100.1");
-            SKSpecialDecimal c5 = new SKSpecialDecimal(12.3, 30);
-            SKSpecialDecimal c6 = new SKSpecialDecimal("-0");
+            SKSpecialDecimal c1 = new SKSpecialDecimal("2.533345");
+            SKSpecialDecimal c2 = new SKSpecialDecimal("1.00000");
 
             //c2.cut(2);
-            textBox1.Text += (c1 + c2).ToString();
+            textBox1.Text += (c1/c2).ToString();
+            //textBox1.Text += (c1 * c2).ToString();
             textBox1.Text += "\r\n";
         }
     }

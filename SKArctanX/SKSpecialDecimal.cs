@@ -315,10 +315,18 @@ namespace SKArctanX
                 else if(this[i] < x[i])
                     return (positive) ? -1 : 1;
             }
-            if(get_digit() > x.get_digit())//虽然前面全都相等了，但哥有效位数较多，故绝对值较大
-                return (positive) ? 1 : -1;
-            else if(get_digit() < x.get_digit())
-                return (positive) ? -1 : 1;
+            if (get_digit() > x.get_digit())//有效位数较多且不为零
+            {
+                for (int i = x.get_digit(); i < get_digit(); i++)
+                    if (this[i] != (byte)0)
+                        return (positive) ? 1 : -1;
+            }
+            else if (get_digit() < x.get_digit())
+            {
+                for (int i = get_digit(); i < x.get_digit(); i++)
+                    if (x[i] != (byte)0)
+                        return (positive) ? -1 : 1;
+            }
             return 0;
         }
 
@@ -372,9 +380,13 @@ namespace SKArctanX
         /// <returns></returns>
         public static SKSpecialDecimal operator +(SKSpecialDecimal a, SKSpecialDecimal b)
         {
+            if (a.is_zero())
+                return new SKSpecialDecimal(b);
+            else if (b.is_zero())
+                return new SKSpecialDecimal(a);
             SKSpecialDecimal a_copy = new SKSpecialDecimal(a);
             SKSpecialDecimal b_copy = new SKSpecialDecimal(b);
-            //越小越好，表示末位所在的位置
+            //越小越精确，表示末位所在的位置
             int a_min_bit = a_copy.exp_10 - a_copy.get_digit() + 1;
             int b_min_bit = b_copy.exp_10 - b_copy.get_digit() + 1;
             SKSpecialDecimal ret = add(a_copy, b_copy);
@@ -551,14 +563,75 @@ namespace SKArctanX
         }
 
         /// <summary>
+        /// 除法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a">除数</param>
+        /// <param name="b">被除数</param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator /(SKSpecialDecimal a, SKSpecialDecimal b)
+        {
+            if (a.get_digit() == 0 || b.get_digit() == 0)
+                return new SKSpecialDecimal();
+            int less = Math.Min(a.get_digit(), b.get_digit());
+            SKSpecialDecimal ret = div(a, b);
+            ret.cut(less);
+            return ret;
+        }
+        /// <summary>
+        /// 除法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a">除数</param>
+        /// <param name="b">被除数</param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator /(SKSpecialDecimal a, double b)
+        {
+            SKSpecialDecimal bb = new SKSpecialDecimal(b);
+            return a / bb;
+        }
+        /// <summary>
+        /// 除法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a">除数</param>
+        /// <param name="b">被除数</param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator /(double a, SKSpecialDecimal b)
+        {
+            SKSpecialDecimal aa = new SKSpecialDecimal(a);
+            return aa / b;
+        }
+        /// <summary>
+        /// 除法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a">除数</param>
+        /// <param name="b">被除数</param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator /(SKSpecialDecimal a, int b)
+        {
+            SKSpecialDecimal bb = new SKSpecialDecimal(b);
+            return a / bb;
+        }
+        /// <summary>
+        /// 除法，结果的有效位数与两数有效位数较少的数相同
+        /// </summary>
+        /// <param name="a">除数</param>
+        /// <param name="b">被除数</param>
+        /// <returns></returns>
+        public static SKSpecialDecimal operator /(int a, SKSpecialDecimal b)
+        {
+            SKSpecialDecimal aa = new SKSpecialDecimal(a);
+            return aa / b;
+        }
+
+        /// <summary>
         /// 不考虑精度、误差情况下的加法
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static SKSpecialDecimal add(SKSpecialDecimal a, SKSpecialDecimal b)
+        private static SKSpecialDecimal add(SKSpecialDecimal _a, SKSpecialDecimal _b)
         {
-
+            SKSpecialDecimal a = new SKSpecialDecimal(_a);
+            SKSpecialDecimal b = new SKSpecialDecimal(_b);
             if (a.get_digit() == 0)
                 return new SKSpecialDecimal(b);
             else if (b.get_digit() == 0)
@@ -620,8 +693,9 @@ namespace SKArctanX
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static SKSpecialDecimal mul_single(SKSpecialDecimal a, byte b)
+        private static SKSpecialDecimal mul_single(SKSpecialDecimal _a, byte b)
         {
+            SKSpecialDecimal a = new SKSpecialDecimal(_a);
             if (b > 9)
                 throw new Exception("必须是一位数啊！");
             if (a.get_digit() == 0 || a.is_zero())
@@ -646,8 +720,10 @@ namespace SKArctanX
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static SKSpecialDecimal mul(SKSpecialDecimal a, SKSpecialDecimal b)
+        private static SKSpecialDecimal mul(SKSpecialDecimal _a, SKSpecialDecimal _b)
         {
+            SKSpecialDecimal a = new SKSpecialDecimal(_a);
+            SKSpecialDecimal b = new SKSpecialDecimal(_b);
             if (a.get_digit() == 0)
                 return new SKSpecialDecimal(b);
             else if (b.get_digit() == 0)
@@ -674,7 +750,6 @@ namespace SKArctanX
             }
             ret.fix();
             ret.positive = (a.get_positive() == b.get_positive());
-            ret.exp_10 = a.get_exp() + b.get_exp();
             return ret;
         }
         /// <summary>
@@ -684,9 +759,49 @@ namespace SKArctanX
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static SKSpecialDecimal div(SKSpecialDecimal a, SKSpecialDecimal b)
+        private static SKSpecialDecimal div(SKSpecialDecimal _a, SKSpecialDecimal _b)
         {
-            return new SKSpecialDecimal();
+            SKSpecialDecimal a = new SKSpecialDecimal(_a);
+            SKSpecialDecimal b = new SKSpecialDecimal(_b);
+            if (a.get_digit() == 0 || b.get_digit() == 0 || b.is_zero())
+                return new SKSpecialDecimal();
+            else if (a.is_zero())
+                return new SKSpecialDecimal(0);
+            SKSpecialDecimal ret = new SKSpecialDecimal();
+
+            SKSpecialDecimal tmp = new SKSpecialDecimal(b);
+            tmp.exp_10 = a.get_exp();
+            bool first_zero = (abs(tmp).compare_to(abs(a)) > 0);
+
+            ret.positive = (a.get_positive() == b.get_positive()) ? true : false;
+            ret.exp_10 = a.get_exp() - b.get_exp();
+            bool stop = false;
+            for (int i = (first_zero) ? 1 : 0; i < a.get_digit() + b.get_digit(); i++)
+            {
+                for (int j = 1; j < 10; j++)
+                {
+                    ret[i] = (byte)j;
+                    int compare_ans = mul(ret, b).compare_to(a);
+                    if (compare_ans == 0)
+                    {
+                        stop = true;
+                        break;
+                    }
+                    else if (compare_ans > 0)
+                    {
+                        ret[i] = (byte)(j - 1);
+                        break;
+                    }
+                }
+                if (stop)
+                {
+                    for (int j = i + 1; j < a.get_digit() + b.get_digit(); j++)
+                        ret[j] = 0;
+                    break;
+                }
+            }
+            ret.fix();
+            return ret;
         }
 
         /// <summary>
