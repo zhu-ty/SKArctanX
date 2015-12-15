@@ -9,10 +9,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SKArctanX
-{
-    //特殊地，零只有一位精度
+{ 
     /// <summary>
-    /// 有符号高精度
+    /// 有符号高精度，特殊地，零只有一位精度
     /// </summary>
     class SKSpecialDecimal
     {
@@ -85,9 +84,12 @@ namespace SKArctanX
         /// 用指定的string初始化高精度小数
         /// </summary>
         /// <param name="x"></param>
-        public void reset(string x)
+        public void reset(string _x)
         {
             clear();
+            string x = _x.Replace("\r", "");
+            x = x.Replace("\n", "");
+            x = x.Replace(" ", "");
             if (x[0] == '-')
             {
                 positive = false;
@@ -134,7 +136,7 @@ namespace SKArctanX
             if (x < 0)
                 x = 0;
             if (x > data.Count)
-                throw (new Exception("Cut To Long Exception"));
+                return;// throw (new Exception("Cut To Long Exception"));
             if (x < data.Count)
             {
                 if (x == 0)
@@ -632,9 +634,9 @@ namespace SKArctanX
         {
             SKSpecialDecimal a = new SKSpecialDecimal(_a);
             SKSpecialDecimal b = new SKSpecialDecimal(_b);
-            if (a.get_digit() == 0)
+            if (a.get_digit() == 0 || a.is_zero())
                 return new SKSpecialDecimal(b);
-            else if (b.get_digit() == 0)
+            else if (b.get_digit() == 0 || b.is_zero())
                 return new SKSpecialDecimal(a);
             SKSpecialDecimal ans = new SKSpecialDecimal();
             int compare_abs = abs(a).compare_to(abs(b));
@@ -698,8 +700,10 @@ namespace SKArctanX
             SKSpecialDecimal a = new SKSpecialDecimal(_a);
             if (b > 9)
                 throw new Exception("必须是一位数啊！");
-            if (a.get_digit() == 0 || a.is_zero())
+            if (a.get_digit() == 0 || a.is_zero() || b == 1)
                 return new SKSpecialDecimal(a);
+            else if (b == 0)
+                return new SKSpecialDecimal(0);
             SKSpecialDecimal ret = new SKSpecialDecimal();
             byte carry = 0;
             for (int i = a.get_digit() - 1; i > -1; i--)
@@ -831,7 +835,6 @@ namespace SKArctanX
                     data.Add(Convert.ToByte(Math.Floor(tmp * Math.Pow(10, i)) % 10));
             }
         }
-
         /// <summary>
         /// 在(x-1)位处发生进位，同时截取x位有效数字
         /// </summary>
