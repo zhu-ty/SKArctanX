@@ -45,6 +45,11 @@ namespace SKArctanX
         #endregion
 
         /// <summary>
+        /// 最大有效位数限制
+        /// </summary>
+        const int LIMIT_DIGIT = 100;
+        
+        /// <summary>
         /// 默认构造函数
         /// </summary>
         public SKAlgorithm() { }
@@ -53,48 +58,61 @@ namespace SKArctanX
         /// 利用泰勒展开法计算arctan(x)
         /// </summary>
         /// <param name="x"></param>
-        /// <param name="decimal_place">小数点精确位数</param>
+        /// <param name="digit">有效位数</param>
         /// <returns></returns>
-        public SKSpecialDecimal Talor(SKSpecialDecimal _x, int decimal_place)
+        public SKSpecialDecimal Talor(SKSpecialDecimal _x, int digit)
         {
-            if (decimal_place <= 0)
+            if (digit <= 0 || digit > LIMIT_DIGIT)
                 return new SKSpecialDecimal();
             SKSpecialDecimal x = new SKSpecialDecimal(_x);
-            x[x.get_exp() + 1 + decimal_place + append_add] = (byte)0;
+            x[digit + append_add] = (byte)0;
+            int cmp_1_ans = x.compare_to(1);
             if (!x.get_positive())
             {
                 x.inverse();
-                SKSpecialDecimal ret = Talor(x, decimal_place);
+                SKSpecialDecimal ret = Talor(x, digit);
                 ret.inverse();
                 return ret;
             }
-            else if (x.compare_to(1) > 0)
+            else if (cmp_1_ans > 0)
             {
-                return new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Talor((new SKSpecialDecimal(1, x.get_digit())) / x, decimal_place)));
+                SKSpecialDecimal ret = new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Talor((new SKSpecialDecimal(1, x.get_digit())) / x, digit)));
+                ret.cut(digit);
+                return ret;
+            }
+            else if (cmp_1_ans == 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal(pi) / new SKSpecialDecimal(2, digit + append_add);
+                ret.cut(digit);
+                return ret;
             }
             else
             {
                 SKSpecialDecimal ret = new SKSpecialDecimal(x);
-                SKSpecialDecimal eps = new SKSpecialDecimal(1);
-                eps.mul_10(-decimal_place - 1);
+                SKSpecialDecimal tmp_last = null;
                 bool postive = false;
                 int i = 3;
                 while (true)
                 {
                     SKSpecialDecimal tmp = new SKSpecialDecimal(x);
                     tmp = SKSpecialDecimal.pow(tmp, i);
-                    tmp = tmp / (new SKSpecialDecimal(i,x.get_digit()));
+                    tmp = tmp / (new SKSpecialDecimal(i, x.get_digit()));
                     i = i + 2;
                     if (!postive)
-                    {
                         tmp.inverse();
-                        postive = !postive;
+                    postive = !postive;
+                    if (tmp_last != null)
+                    {
+                        SKSpecialDecimal eps = new SKSpecialDecimal(1);
+                        eps.mul_10(ret.get_exp() - digit - 1);
+                        if (SKSpecialDecimal.abs(tmp + tmp_last).compare_to(eps) < 0)
+                            break;
                     }
-                    if (SKSpecialDecimal.abs(tmp).compare_to(eps) < 0)
-                        break;
                     else
                         ret = ret + tmp;
+                    tmp_last = tmp;
                 }
+                ret.cut(digit);
                 return ret;
             }
         }
@@ -102,17 +120,25 @@ namespace SKArctanX
         /// 利用泰勒展开法计算arctan(x)
         /// </summary>
         /// <param name="x"></param>
-        /// <param name="decimal_place">小数点精确位数</param>
+        /// <param name="digit">有效位数</param>
         /// <returns></returns>
-        public SKSpecialDecimal Talor(double x, int decimal_place)
+        public SKSpecialDecimal Talor(double x, int digit)
         {
-            return Talor(new SKSpecialDecimal(x), decimal_place);
+            return Talor(new SKSpecialDecimal(x,digit + append_add), digit);
         }
 
 
-
+        /// <summary>
+        /// 常数与默认增加的位数
+        /// </summary>
         private const int append_add = 10;
+        /// <summary>
+        /// 常数pi
+        /// </summary>
         private SKSpecialDecimal pi = new SKSpecialDecimal(string_SK_pi);
+        /// <summary>
+        /// 常数e
+        /// </summary>
         private SKSpecialDecimal e = new SKSpecialDecimal(string_SK_e);
     }
 }

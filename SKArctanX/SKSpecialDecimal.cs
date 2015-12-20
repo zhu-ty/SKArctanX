@@ -434,14 +434,15 @@ namespace SKArctanX
             SKSpecialDecimal a_copy = new SKSpecialDecimal(a);
             SKSpecialDecimal b_copy = new SKSpecialDecimal(b);
             //越小越精确，表示末位所在的位置
+            SKSpecialDecimal ret = add(a_copy, b_copy);
             int a_min_bit = a_copy.exp_10 - a_copy.get_digit() + 1;
             int b_min_bit = b_copy.exp_10 - b_copy.get_digit() + 1;
-            SKSpecialDecimal ret = add(a_copy, b_copy);
+            int ret_min_bit = ret.exp_10 - ret.get_digit() + 1;
             //TODO(_SHADOWK): BUG REMAIN!!!!
             if (a_min_bit > b_min_bit)//以a的精度为准
-                ret.cut(b_copy.get_digit() - a_min_bit + b_min_bit);//b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
+                ret.cut(ret.get_digit() - a_min_bit + ret_min_bit);//b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
             else//以b的精度为准
-                ret.cut(a_copy.get_digit() - b_min_bit + a_min_bit);
+                ret.cut(ret.get_digit() - b_min_bit + ret_min_bit);
             return ret;
         }
         /// <summary>
