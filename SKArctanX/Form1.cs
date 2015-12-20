@@ -106,39 +106,41 @@ namespace SKArctanX
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            SKSpecialDecimal sk_pi = new SKSpecialDecimal(string_SK_pi);
-            SKSpecialDecimal sk_e = new SKSpecialDecimal(string_SK_e);
-            SKSpecialDecimal zero = new SKSpecialDecimal(0);
+            //SKSpecialDecimal sk_pi = new SKSpecialDecimal(string_SK_pi);
+            //SKSpecialDecimal sk_e = new SKSpecialDecimal(string_SK_e);
+            //SKSpecialDecimal zero = new SKSpecialDecimal(0);
 
 
-            SKSpecialDecimal[] x_list = new SKSpecialDecimal[6];
-            for (int i = 0; i < 6; i++) x_list[i] = new SKSpecialDecimal(0.1*i,30);
+            //SKSpecialDecimal[] x_list = new SKSpecialDecimal[6];
+            //for (int i = 0; i < 6; i++) x_list[i] = new SKSpecialDecimal(0.1*i,30);
 
-            SKSpecialDecimal[] y_oula_list = new SKSpecialDecimal[6];
-            SKSpecialDecimal[] y_tixing_list = new SKSpecialDecimal[6];
-            for (int i = 0; i < 6; i++)
-            {
-                y_oula_list[i] = new SKSpecialDecimal(0);
-                y_tixing_list[i] = new SKSpecialDecimal(0);
-            }
-            SKSpecialDecimal h = new SKSpecialDecimal(0.1, 30);
-            SKSpecialDecimal high_2 = new SKSpecialDecimal(2, 30);
-            for (int i = 1; i <= 5; i++)
-            {
-                y_oula_list[i] = y_oula_list[i - 1] + (h / high_2) * (x_list[i - 1] * x_list[i - 1] + x_list[i - 1] - y_oula_list[i - 1] + x_list[i] * x_list[i] + x_list[i] - y_oula_list[i - 1] - h * (x_list[i - 1] * x_list[i - 1] + x_list[i - 1] - y_oula_list[i - 1]));
-                y_tixing_list[i] = ((high_2 - h) / (h + high_2)) * y_tixing_list[i - 1] + (h / (h + high_2)) * (x_list[i - 1] * x_list[i - 1] + x_list[i - 1] + x_list[i] * x_list[i] + x_list[i]);
-            }
-            for (int i = 1; i <= 5; i++)
-            {
-                y_oula_list[i].cut(10);
-                textBox1.Text += y_oula_list[i].ToString() + "  ";
-            }
-            textBox1.Text += "\r\n";
-            for (int i = 1; i <= 5; i++)
-            {
-                y_tixing_list[i].cut(10);
-                textBox1.Text += y_tixing_list[i].ToString() + "  ";
-            }
+            //SKSpecialDecimal[] y_oula_list = new SKSpecialDecimal[6];
+            //SKSpecialDecimal[] y_tixing_list = new SKSpecialDecimal[6];
+            //for (int i = 0; i < 6; i++)
+            //{
+            //    y_oula_list[i] = new SKSpecialDecimal(0);
+            //    y_tixing_list[i] = new SKSpecialDecimal(0);
+            //}
+            //SKSpecialDecimal h = new SKSpecialDecimal(0.1, 30);
+            //SKSpecialDecimal high_2 = new SKSpecialDecimal(2, 30);
+            //for (int i = 1; i <= 5; i++)
+            //{
+            //    y_oula_list[i] = y_oula_list[i - 1] + (h / high_2) * (x_list[i - 1] * x_list[i - 1] + x_list[i - 1] - y_oula_list[i - 1] + x_list[i] * x_list[i] + x_list[i] - y_oula_list[i - 1] - h * (x_list[i - 1] * x_list[i - 1] + x_list[i - 1] - y_oula_list[i - 1]));
+            //    y_tixing_list[i] = ((high_2 - h) / (h + high_2)) * y_tixing_list[i - 1] + (h / (h + high_2)) * (x_list[i - 1] * x_list[i - 1] + x_list[i - 1] + x_list[i] * x_list[i] + x_list[i]);
+            //}
+            //for (int i = 1; i <= 5; i++)
+            //{
+            //    y_oula_list[i].cut(10);
+            //    textBox1.Text += y_oula_list[i].ToString() + "  ";
+            //}
+            //textBox1.Text += "\r\n";
+            //for (int i = 1; i <= 5; i++)
+            //{
+            //    y_tixing_list[i].cut(10);
+            //    textBox1.Text += y_tixing_list[i].ToString() + "  ";
+            //}
+            SKAlgorithm ska = new SKAlgorithm();
+            textBox1.Text += ska.Talor(0.5, 20).ToString();
         }
     }
 }

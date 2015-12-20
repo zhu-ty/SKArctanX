@@ -54,6 +54,37 @@ namespace SKArctanX
             reset(origin);
         }
         /// <summary>
+        /// 返回位数上的值，高位在前，若超过索引将返回0
+        /// <para>请注意，单独设定某一位的值可能会无意提高精度</para>
+        /// </summary>
+        /// <param name="index">该位的索引</param>
+        /// <returns></returns>
+        public byte this[int index]
+        {
+            get
+            {
+                if (index < 0 || index >= get_digit())
+                    return 0;
+                return data[index];
+            }
+            set
+            {
+                if (value > 9)
+                    throw new Exception("某一位的值不应该超过9");
+                if (index < 0)
+                    throw new Exception("不允许设置索引小于零的某一位的值");
+                else if (index >= get_digit())
+                {
+                    int tmp = get_digit();
+                    for (int i = 0; i < index - tmp; i++)
+                        data.Add(0);
+                    data.Add(value);
+                }
+                else
+                    data[index] = value;
+            }
+        }
+        /// <summary>
         /// 清除data、positive与exp_10
         /// </summary>
         public void clear()
@@ -260,37 +291,6 @@ namespace SKArctanX
             return positive;
         }
         /// <summary>
-        /// 返回位数上的值，高位在前，若超过索引将返回0
-        /// <para>请注意，单独设定某一位的值可能会无意提高精度</para>
-        /// </summary>
-        /// <param name="index">该位的索引</param>
-        /// <returns></returns>
-        public byte this[int index]
-        {
-            get
-            {
-                if (index < 0 || index >= get_digit())
-                    return 0;
-                return data[index];
-            }
-            private set
-            {
-                if (value > 9)
-                    throw new Exception("某一位的值不应该超过9");
-                if (index < 0)
-                    throw new Exception("不允许设置索引小于零的某一位的值");
-                else if (index >= get_digit())
-                {
-                    int tmp = get_digit();
-                    for (int i = 0; i < index - tmp; i++)
-                        data.Add(0);
-                    data.Add(value);
-                }
-                else
-                    data[index] = value;
-            }
-        }
-        /// <summary>
         /// 返回与另外某数的比较（不考虑精度）
         /// <para>若大于该数，返回1，相等则返回0，否则返回-1</para>
         /// <para>若某数不存在位数（有效位数为0），返回0</para>
@@ -331,7 +331,28 @@ namespace SKArctanX
             }
             return 0;
         }
-
+        /// <summary>
+        /// 返回与另外某数的比较（不考虑精度）
+        /// <para>若大于该数，返回1，相等则返回0，否则返回-1</para>
+        /// <para>当且仅当有效位数、各位数及符号位全部一致时，才判定相等</para>
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public int compare_to(int x)
+        {
+            return this.compare_to(new SKSpecialDecimal(x));
+        }
+        /// <summary>
+        /// 返回与另外某数的比较（不考虑精度）
+        /// <para>若大于该数，返回1，相等则返回0，否则返回-1</para>
+        /// <para>当且仅当有效位数、各位数及符号位全部一致时，才判定相等</para>
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public int compare_to(double x)
+        {
+            return this.compare_to(new SKSpecialDecimal(x));
+        }
         /// <summary>
         /// 按科学计数法的方式输出字符串
         /// </summary>
@@ -372,6 +393,30 @@ namespace SKArctanX
             a_abs.positive = true;
             return a_abs;
         }
+        /// <summary>
+        /// 返回幂次值，仅支持整数次幂
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        public static SKSpecialDecimal pow(SKSpecialDecimal x, int a)
+        {
+            if (a == 0)
+                return new SKSpecialDecimal(1, x.get_digit());
+            else if (a == 1)
+                return new SKSpecialDecimal(x);
+            else if (a == 2)
+                return x * x;
+            else if (a < 0)
+                return (new SKSpecialDecimal(1, x.get_digit())) / pow(x, -1 * a);
+            else
+            {
+                if (a % 2 == 0)
+                    return pow(x, a / 2) * pow(x, a / 2);
+                else
+                    return pow(x, a / 2) * pow(x, a / 2) * x;
+            }
+        }
 
         /// <summary>
         /// 加法，有效位数取决于绝对误差最大的数
@@ -392,6 +437,7 @@ namespace SKArctanX
             int a_min_bit = a_copy.exp_10 - a_copy.get_digit() + 1;
             int b_min_bit = b_copy.exp_10 - b_copy.get_digit() + 1;
             SKSpecialDecimal ret = add(a_copy, b_copy);
+            //TODO(_SHADOWK): BUG REMAIN!!!!
             if (a_min_bit > b_min_bit)//以a的精度为准
                 ret.cut(b_copy.get_digit() - a_min_bit + b_min_bit);//b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
             else//以b的精度为准
