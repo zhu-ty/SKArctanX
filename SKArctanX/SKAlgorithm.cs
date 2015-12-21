@@ -65,7 +65,7 @@ namespace SKArctanX
             if (digit <= 0 || digit > LIMIT_DIGIT)
                 return new SKSpecialDecimal();
             SKSpecialDecimal x = new SKSpecialDecimal(_x);
-            x[digit + append_add] = (byte)0;
+            x[digit + APPEND_ADD] = (byte)0;
             int cmp_1_ans = x.compare_to(1);
             if (!x.get_positive())
             {
@@ -82,7 +82,7 @@ namespace SKArctanX
             }
             else if (cmp_1_ans == 0)
             {
-                SKSpecialDecimal ret = new SKSpecialDecimal(pi) / new SKSpecialDecimal(2, digit + append_add);
+                SKSpecialDecimal ret = new SKSpecialDecimal(pi) / new SKSpecialDecimal(4, digit + APPEND_ADD);
                 ret.cut(digit);
                 return ret;
             }
@@ -124,14 +124,14 @@ namespace SKArctanX
         /// <returns></returns>
         public SKSpecialDecimal Talor(double x, int digit)
         {
-            return Talor(new SKSpecialDecimal(x,digit + append_add), digit);
+            return Talor(new SKSpecialDecimal(x,digit + APPEND_ADD), digit);
         }
 
 
         /// <summary>
         /// 常数与默认增加的位数
         /// </summary>
-        private const int append_add = 10;
+        private const int APPEND_ADD = LIMIT_DIGIT / 5;
         /// <summary>
         /// 常数pi
         /// </summary>

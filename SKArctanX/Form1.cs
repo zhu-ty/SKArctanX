@@ -108,7 +108,7 @@ namespace SKArctanX
         {
             DateTime dt = DateTime.Now;
             SKAlgorithm ska = new SKAlgorithm();
-            textBox1.Text += ska.Talor(0.00001, 20).ToString();
+            textBox1.Text += ska.Talor(new SKSpecialDecimal("0.000000001"), 20).ToString();
             DateTime dt2 = DateTime.Now;
             textBox1.Text += "\r\n" + (dt2 - dt).TotalSeconds.ToString();
         }
