@@ -64,6 +64,8 @@ namespace SKArctanX
         {
             if (digit <= 0 || digit > LIMIT_DIGIT)
                 return new SKSpecialDecimal();
+            if (_x.compare_to(0) == 0)
+                return new SKSpecialDecimal(0);
             SKSpecialDecimal x = new SKSpecialDecimal(_x);
             x[digit + APPEND_ADD] = (byte)0;
             int cmp_1_ans = x.compare_to(1);
@@ -127,11 +129,84 @@ namespace SKArctanX
             return Talor(new SKSpecialDecimal(x,digit + APPEND_ADD), digit);
         }
 
+        /// <summary>
+        /// 利用复化辛普森公式展开法计算arctan(x)
+        /// </summary>
+        /// <param name="_x"></param>
+        /// <param name="digit"></param>
+        /// <returns></returns>
+        public SKSpecialDecimal Simpson(SKSpecialDecimal _x, int digit)
+        {
+            if (digit <= 0 || digit > LIMIT_DIGIT)
+                return new SKSpecialDecimal();
+            if (_x.compare_to(0) == 0)
+                return new SKSpecialDecimal(0);
+            SKSpecialDecimal x = new SKSpecialDecimal(_x);
+            x[digit + APPEND_ADD] = (byte)0;
+            int cmp_1_ans = x.compare_to(1);
+            if (!x.get_positive())
+            {
+                x.inverse();
+                SKSpecialDecimal ret = Simpson(x, digit);
+                ret.inverse();
+                return ret;
+            }
+            else if (cmp_1_ans > 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Simpson((new SKSpecialDecimal(1, x.get_digit())) / x, digit)));
+                ret.cut(digit);
+                return ret;
+            }
+            else if (cmp_1_ans == 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal(pi) / new SKSpecialDecimal(4, digit + APPEND_ADD);
+                ret.cut(digit);
+                return ret;
+            }
+            else
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal(x);
+                SKSpecialDecimal h = new SKSpecialDecimal(1);
+                h.mul_10(-(x.get_exp() + digit + APPEND_ADD) / 4 - 1);
+                //这基本可作为结果的精度要求，注意到x很小时，arctanx趋近于x
+                //因此log(x)与log(arctanx)有相似的值
+                //具体分析详见报告
+
+                return ret;
+            }
+        }
+        /// <summary>
+        /// 利用复化辛普森公式展开法计算arctan(x)
+        /// </summary>
+        /// <param name="_x"></param>
+        /// <param name="digit"></param>
+        /// <returns></returns>
+        public SKSpecialDecimal Simpson(double x, int digit)
+        {
+            return Simpson(new SKSpecialDecimal(x, digit + APPEND_ADD), digit);
+        }
+        /// <summary>
+        /// 返回arctanx一阶导的取值
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        private SKSpecialDecimal arctan_1(SKSpecialDecimal x)
+        {
+            return (new SKSpecialDecimal(1, x.get_digit() + APPEND_ADD)) / (SKSpecialDecimal.pow(x, 2) * (new SKSpecialDecimal(1, x.get_digit() + APPEND_ADD)));
+        }
 
         /// <summary>
         /// 常数与默认增加的位数
         /// </summary>
-        private const int APPEND_ADD = LIMIT_DIGIT / 5;
+        private const int APPEND_ADD = LIMIT_DIGIT / 10;
+        /// <summary>
+        /// arctanx的在[0,1]上的4阶导最大值
+        /// </summary>
+        //private SKSpecialDecimal ARCTAN_4_MAX = new SKSpecialDecimal(24, LIMIT_DIGIT);
+        /// <summary>
+        /// arctanx的在[0,1]上的6阶导最大值
+        /// </summary>
+        //private SKSpecialDecimal ARCTAN_6_MAX = new SKSpecialDecimal(800, LIMIT_DIGIT);
         /// <summary>
         /// 常数pi
         /// </summary>

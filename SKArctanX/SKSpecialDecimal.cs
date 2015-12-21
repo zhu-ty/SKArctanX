@@ -417,6 +417,30 @@ namespace SKArctanX
                     return pow(x, a / 2) * pow(x, a / 2) * x;
             }
         }
+        /// <summary>
+        /// 取不超过x的最大整数
+        /// <para>若x的绝对值大于int的最大表示范围，返回0</para>
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static int floor(SKSpecialDecimal x)
+        {
+            if (abs(x).compare_to(SKSpecialDecimal.INT_MAX) > 0)
+                return 0;
+            int ret = 0;
+            if (x.get_exp() > -1)
+            {
+                for (int i = x.get_exp(); i > -1; i--)
+                    ret += (int)Math.Round(x[x.get_exp() - i] * Math.Pow(10,i));
+                if (!x.get_positive())
+                    ret = ret * -1 - 1;
+            }
+            else if (!x.get_positive())
+            {
+                ret = -1;
+            }
+            return ret;
+        }
 
         /// <summary>
         /// 加法，有效位数取决于绝对误差最大的数
@@ -914,5 +938,7 @@ namespace SKArctanX
         /// 是否为正数
         /// </summary>
         private bool positive = true;
+
+        private static SKSpecialDecimal INT_MAX = new SKSpecialDecimal(int.MaxValue);
     }
 }
