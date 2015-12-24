@@ -114,11 +114,12 @@ namespace SKArctanX
             SKSpecialDecimal a = new SKSpecialDecimal("0.5");
             DateTime dt = DateTime.Now;
             SKAlgorithm ska = new SKAlgorithm();
-            textBox1.Text += ska.Talor(new SKSpecialDecimal(0.99,30), 20,progressBar1).ToString() + "\r\n";
-            //textBox1.Text += ska.Simpson(0.95, 16, progressBar1).ToString();
-            //textBox1.Text += ((new SKSpecialDecimal(10, 30)) / (new SKSpecialDecimal(2, 30))).ToString() + "\r\n";
+            textBox1.Text += ska.Talor(-9999, 20,progressBar1).ToString() + "\r\n";
             progressBar1.Value = 0;
-            //textBox1.Text += SKSpecialDecimal.floor(a).ToString();
+            textBox1.Text += ska.Cotes(-9999, 20, progressBar1).ToString() + "\r\n";
+            progressBar1.Value = 0;
+            //textBox1.Text += ska.Simpson(-9999, 16, progressBar1).ToString() + "\r\n";
+            //progressBar1.Value = 0;
             DateTime dt2 = DateTime.Now;
             textBox1.Text += "\r\n耗时：" + (dt2 - dt).TotalSeconds.ToString();
         }

@@ -202,7 +202,6 @@ namespace SKArctanX
         /// <returns></returns>
         public SKSpecialDecimal Simpson(SKSpecialDecimal _x, int digit, System.Windows.Forms.ProgressBar pb = null)
         {
-            
             if (digit <= 0 || digit > LIMIT_DIGIT || digit > SIMPSON_LIMIT)
                 return new SKSpecialDecimal();
             if (_x.compare_to(0) == 0)
@@ -213,13 +212,13 @@ namespace SKArctanX
             if (!x.get_positive())
             {
                 x.inverse();
-                SKSpecialDecimal ret = Simpson(x, digit);
+                SKSpecialDecimal ret = Simpson(x, digit, pb);
                 ret.inverse();
                 return ret;
             }
             else if (cmp_1_ans > 0)
             {
-                SKSpecialDecimal ret = new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Simpson((new SKSpecialDecimal(1, x.get_digit())) / x, digit)));
+                SKSpecialDecimal ret = new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Simpson((new SKSpecialDecimal(1, x.get_digit())) / x, digit, pb)));
                 ret.cut(digit);
                 return ret;
             }
@@ -232,14 +231,21 @@ namespace SKArctanX
             else
             {
                 SKSpecialDecimal ret;
+                /*
                 SKSpecialDecimal h = new SKSpecialDecimal(1,digit + APPEND_ADD);
-                h.mul_10(-(x.get_exp() + digit) / 4 - 1);
-                //h = new SKSpecialDecimal(0.01, 30);
+                h.mul_10(-(-x.get_exp() + digit / 4));
+                for (int i = 0; i < (x.get_exp() + digit) % 4; i++)
+                    h = h / (new SKSpecialDecimal(1.8, digit + APPEND_ADD));
+                */
+                double need = x.get_exp() - (digit + 2.0D) / 4 + 1;
+                double hh = Math.Pow(10, need);
+                SKSpecialDecimal h = new SKSpecialDecimal(hh, digit + APPEND_ADD);
                 //这基本可作为结果的精度要求，注意到x很小时，arctanx趋近于x
                 //因此log(x)与log(arctanx)有相似的值
                 //具体分析详见报告
                 SKSpecialDecimal _n = x / h;
                 int n = SKSpecialDecimal.floor(_n);
+                h = x / (new SKSpecialDecimal(n, x.get_digit()));
                 if (pb != null)
                     pb.Maximum = n / 10;
                 SKSpecialDecimal part_a = new SKSpecialDecimal(0);
@@ -280,6 +286,105 @@ namespace SKArctanX
         {
             return Simpson(new SKSpecialDecimal(x, digit), digit, pb);
         }
+        /// <summary>
+        /// 科特斯法，还有bug
+        /// </summary>
+        /// <param name="_x"></param>
+        /// <param name="digit"></param>
+        /// <param name="pb"></param>
+        /// <returns></returns>
+        public SKSpecialDecimal Cotes(SKSpecialDecimal _x, int digit, System.Windows.Forms.ProgressBar pb = null)
+        {
+            if (digit <= 0 || digit > LIMIT_DIGIT)
+                return new SKSpecialDecimal();
+            if (_x.compare_to(0) == 0)
+                return new SKSpecialDecimal(0);
+            SKSpecialDecimal x = new SKSpecialDecimal(_x);
+            //x[digit + APPEND_ADD] = (byte)0;
+            int cmp_1_ans = x.compare_to(1);
+            if (!x.get_positive())
+            {
+                x.inverse();
+                SKSpecialDecimal ret = Cotes(x, digit, pb);
+                ret.inverse();
+                return ret;
+            }
+            else if (cmp_1_ans > 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Cotes((new SKSpecialDecimal(1, x.get_digit())) / x, digit, pb)));
+                ret.cut(digit);
+                return ret;
+            }
+            else if (cmp_1_ans == 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal(pi) / new SKSpecialDecimal(4, digit + APPEND_ADD);
+                ret.cut(digit);
+                return ret;
+            }
+            else
+            {
+                SKSpecialDecimal ret;
+                /*
+                SKSpecialDecimal h = new SKSpecialDecimal(1, digit + APPEND_ADD);
+                h.mul_10(-(-x.get_exp() + digit / 6));
+                for (int i = 0; i < (x.get_exp() + digit) % 6; i++)
+                    h = h / (new SKSpecialDecimal(1.5, digit + APPEND_ADD));
+                */
+                double need = x.get_exp() - (digit + 1.0D) / 6 + 1;
+                double hh = Math.Pow(10, need);
+                SKSpecialDecimal h = new SKSpecialDecimal(hh, digit + APPEND_ADD);
+                //这基本可作为结果的精度要求，注意到x很小时，arctanx趋近于x
+                //因此log(x)与log(arctanx)有相似的值
+                //具体分析详见报告
+                SKSpecialDecimal _n = x / h;
+                int n = SKSpecialDecimal.floor(_n);
+                h = x / (new SKSpecialDecimal(n, x.get_digit()));
+                if (pb != null)
+                    pb.Maximum = n / 5;
+                SKSpecialDecimal part_a = new SKSpecialDecimal(0);
+                SKSpecialDecimal part_b = new SKSpecialDecimal(0);
+                SKSpecialDecimal part_c = new SKSpecialDecimal(0);
+                SKSpecialDecimal part_d = new SKSpecialDecimal(0);
+                SKSpecialDecimal x_a_now = h / (new SKSpecialDecimal(4, h.get_digit()));
+                SKSpecialDecimal x_b_now = h / (new SKSpecialDecimal(2, h.get_digit()));
+                SKSpecialDecimal x_c_now = h / (new SKSpecialDecimal(4, h.get_digit())) * (new SKSpecialDecimal(3, h.get_digit()));
+                SKSpecialDecimal x_d_now = new SKSpecialDecimal(h);
+                part_a = part_a + arctan_1(x_a_now);
+                x_a_now = x_a_now + h;
+                part_b = part_b + arctan_1(x_b_now);
+                x_b_now = x_b_now + h;
+                part_c = part_c + arctan_1(x_c_now);
+                x_c_now = x_c_now + h;
+                for (int k = 1; k < n; k++)
+                {
+                    part_a = part_a + arctan_1(x_a_now);
+                    part_b = part_b + arctan_1(x_b_now);
+                    part_c = part_c + arctan_1(x_c_now);
+                    part_d = part_d + arctan_1(x_d_now);
+
+                    x_a_now = x_a_now + h;
+                    x_b_now = x_b_now + h;
+                    x_c_now = x_c_now + h;
+                    x_d_now = x_d_now + h;
+                    if (pb != null && k % 5 == 0)
+                        pb.PerformStep();
+                }
+                part_a = part_a * (new SKSpecialDecimal(32, part_a.get_digit()));
+                part_b = part_b * (new SKSpecialDecimal(12, part_b.get_digit()));
+                part_c = part_c * (new SKSpecialDecimal(32, part_c.get_digit()));
+                part_d = part_d * (new SKSpecialDecimal(14, part_d.get_digit()));
+                ret = (new SKSpecialDecimal(7, part_a.get_digit() + APPEND_ADD)) + part_a + part_b + part_c + part_d + (new SKSpecialDecimal(7, x.get_digit())) * arctan_1(x);
+                ret = h / (new SKSpecialDecimal(90, h.get_digit())) * ret;
+                ret.cut(digit);
+                return ret;
+            }
+        }
+        public SKSpecialDecimal Cotes(double x, int digit, System.Windows.Forms.ProgressBar pb = null)
+        {
+            return Cotes(new SKSpecialDecimal(x, digit), digit, pb);
+        }
+
+
         /// <summary>
         /// 返回arctanx一阶导的取值
         /// </summary>
