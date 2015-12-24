@@ -118,6 +118,8 @@ namespace SKArctanX
         public void reset(string _x)
         {
             clear();
+            if (_x == string.Empty)
+                return;
             string x = _x.Replace("\r", "");
             x = x.Replace("\n", "");
             x = x.Replace(" ", "");
@@ -354,6 +356,27 @@ namespace SKArctanX
             return this.compare_to(new SKSpecialDecimal(x));
         }
         /// <summary>
+        /// 返回当前数对应的double值，注意精度有误差，若本数太大，可能甚至无法表示
+        /// <para>出错时返回零</para>
+        /// </summary>
+        /// <returns></returns>
+        public double to_double()
+        {
+            try
+            {
+                double ret = 0;
+                for (int i = 0; i < get_digit(); i++)
+                {
+                    ret += this[i] * Math.Pow(10, get_exp() - i);
+                }
+                return ret;
+            }
+            catch (Exception)
+            {
+                return .0D;
+            }
+        }
+        /// <summary>
         /// 按科学计数法的方式输出字符串
         /// </summary>
         /// <returns></returns>
@@ -462,9 +485,8 @@ namespace SKArctanX
             int a_min_bit = a_copy.exp_10 - a_copy.get_digit() + 1;
             int b_min_bit = b_copy.exp_10 - b_copy.get_digit() + 1;
             int ret_min_bit = ret.exp_10 - ret.get_digit() + 1;
-            //TODO(_SHADOWK): BUG REMAIN!!!!
             if (a_min_bit > b_min_bit)//以a的精度为准
-                ret.cut(ret.get_digit() - a_min_bit + ret_min_bit);//b_copy.cut(b_copy.get_digit() - a_min_bit + b_min_bit);
+                ret.cut(ret.get_digit() - a_min_bit + ret_min_bit);
             else//以b的精度为准
                 ret.cut(ret.get_digit() - b_min_bit + ret_min_bit);
             return ret;
@@ -851,21 +873,36 @@ namespace SKArctanX
             ret.positive = (a.get_positive() == b.get_positive()) ? true : false;
             ret.exp_10 = a.get_exp() - b.get_exp();
             bool stop = false;
+            SKSpecialDecimal accumulate = new SKSpecialDecimal(0);
+            a = abs(a);
+            b = abs(b);
             for (int i = (first_zero) ? 1 : 0; i < a.get_digit() + b.get_digit(); i++)
             {
                 for (int j = 1; j < 10; j++)
                 {
-                    ret[i] = (byte)j;
-                    int compare_ans = mul(ret, b).compare_to(a);
+                    SKSpecialDecimal mul_tmp2 = mul_single(b, (byte)j);
+                    mul_tmp2.mul_10(ret.get_exp() - i);
+                    SKSpecialDecimal now_acc = add(accumulate, mul_tmp2);
+                    //ret[i] = (byte)j;
+                    int compare_ans = now_acc.compare_to(a);
                     if (compare_ans == 0)
                     {
+                        ret[i] = (byte)j;
                         stop = true;
                         break;
                     }
                     else if (compare_ans > 0)
                     {
                         ret[i] = (byte)(j - 1);
+                        mul_tmp2 = mul_single(b, (byte)(j - 1));
+                        mul_tmp2.mul_10(ret.get_exp() - i);
+                        accumulate = add(accumulate, mul_tmp2);
                         break;
+                    }
+                    else if (j == 9)
+                    {
+                        ret[i] = (byte)j;
+                        accumulate = add(accumulate, mul_tmp2);
                     }
                 }
                 if (stop)
