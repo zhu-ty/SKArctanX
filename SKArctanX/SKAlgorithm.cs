@@ -238,7 +238,7 @@ namespace SKArctanX
                 for (int i = 0; i < (x.get_exp() + digit) % 4; i++)
                     h = h / (new SKSpecialDecimal(1.8, digit + APPEND_ADD));
                 */
-                double need = ((x.compare_to(0.7) > 0) ? 0 : x.get_exp()) - (digit + 1.5D) / 4 + 0.8;
+                double need = ((x.compare_to(0.7) > 0) ? 0 : x.get_exp()) - (digit + 1.6D) / 4 + 0.8;
                 double hh = Math.Pow(10, need);
                 SKSpecialDecimal h = new SKSpecialDecimal(hh, digit + APPEND_ADD);
                 //这基本可作为结果的精度要求，注意到x很小时，arctanx趋近于x
