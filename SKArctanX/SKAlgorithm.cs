@@ -121,7 +121,7 @@ namespace SKArctanX
                     i++;
                     SKSpecialDecimal ret_tmp = ret + i_add;
                     SKSpecialDecimal eps = new SKSpecialDecimal(1);
-                    eps.mul_10(ret_tmp.get_exp() - digit - 1);
+                    eps.mul_10(ret_tmp.get_exp() - digit - 2);
                     if (SKSpecialDecimal.abs(SKSpecialDecimal.abs(ret_tmp) - SKSpecialDecimal.abs(ret)).compare_to(eps) < 0)
                         break;
                     ret = ret_tmp;
@@ -136,6 +136,7 @@ namespace SKArctanX
                             pb.Value = (ret.get_exp() - i_add.get_exp() > digit) ? digit : ret.get_exp() - i_add.get_exp();
                     }
                 }
+                ret.cut(digit);
                 return ret;
             }
             else
@@ -157,7 +158,7 @@ namespace SKArctanX
                     if (tmp_last != null)
                     {
                         SKSpecialDecimal eps = new SKSpecialDecimal(1);
-                        eps.mul_10(ret.get_exp() - digit - 1);
+                        eps.mul_10(ret.get_exp() - digit - 2);
                         if (SKSpecialDecimal.abs(tmp + tmp_last).compare_to(eps) < 0)
                             break;
                     }
@@ -192,7 +193,7 @@ namespace SKArctanX
         }
 
         /// <summary>
-        /// 利用复化辛普森公式展开法计算arctan(x)
+        /// 利用复化辛普森公式积分计算arctan(x)
         /// <para>速度较慢，最大有效位置有额外的限制</para>
         /// <para>参见<see cref="SKAlgorithm.SIMPSON_LIMIT"/></para>
         /// </summary>
@@ -207,7 +208,7 @@ namespace SKArctanX
             if (_x.compare_to(0) == 0)
                 return new SKSpecialDecimal(0);
             SKSpecialDecimal x = new SKSpecialDecimal(_x);
-            //x[digit + APPEND_ADD] = (byte)0;
+            x[digit + APPEND_ADD] = (byte)0;
             int cmp_1_ans = x.compare_to(1);
             if (!x.get_positive())
             {
@@ -237,7 +238,7 @@ namespace SKArctanX
                 for (int i = 0; i < (x.get_exp() + digit) % 4; i++)
                     h = h / (new SKSpecialDecimal(1.8, digit + APPEND_ADD));
                 */
-                double need = x.get_exp() - (digit + 2.0D) / 4 + 1;
+                double need = ((x.compare_to(0.7) > 0) ? 0 : x.get_exp()) - (digit + 1.5D) / 4 + 0.8;
                 double hh = Math.Pow(10, need);
                 SKSpecialDecimal h = new SKSpecialDecimal(hh, digit + APPEND_ADD);
                 //这基本可作为结果的精度要求，注意到x很小时，arctanx趋近于x
@@ -274,7 +275,7 @@ namespace SKArctanX
             }
         }
         /// <summary>
-        /// 利用复化辛普森公式展开法计算arctan(x)
+        /// 利用复化辛普森公式积分计算arctan(x)
         /// <para>速度较慢，最大有效位置有额外的限制</para>
         /// <para>参见<see cref="SKAlgorithm.SIMPSON_LIMIT"/></para>
         /// </summary>
@@ -286,12 +287,14 @@ namespace SKArctanX
         {
             return Simpson(new SKSpecialDecimal(x, digit), digit, pb);
         }
+
         /// <summary>
-        /// 科特斯法，还有bug
+        /// 利用柯特斯公式积分计算arctan(x)
+        /// <para>速度一般</para>
         /// </summary>
         /// <param name="_x"></param>
         /// <param name="digit"></param>
-        /// <param name="pb"></param>
+        /// <param name="pb">进度条（可选）</param>
         /// <returns></returns>
         public SKSpecialDecimal Cotes(SKSpecialDecimal _x, int digit, System.Windows.Forms.ProgressBar pb = null)
         {
@@ -300,7 +303,7 @@ namespace SKArctanX
             if (_x.compare_to(0) == 0)
                 return new SKSpecialDecimal(0);
             SKSpecialDecimal x = new SKSpecialDecimal(_x);
-            //x[digit + APPEND_ADD] = (byte)0;
+            x[digit + APPEND_ADD] = (byte)0;
             int cmp_1_ans = x.compare_to(1);
             if (!x.get_positive())
             {
@@ -330,7 +333,7 @@ namespace SKArctanX
                 for (int i = 0; i < (x.get_exp() + digit) % 6; i++)
                     h = h / (new SKSpecialDecimal(1.5, digit + APPEND_ADD));
                 */
-                double need = x.get_exp() - (digit + 1.0D) / 6 + 1;
+                double need = ((x.compare_to(0.7) > 0) ? 0 : x.get_exp()) - (digit + 1.5D) / 6+0.8;
                 double hh = Math.Pow(10, need);
                 SKSpecialDecimal h = new SKSpecialDecimal(hh, digit + APPEND_ADD);
                 //这基本可作为结果的精度要求，注意到x很小时，arctanx趋近于x
@@ -379,11 +382,109 @@ namespace SKArctanX
                 return ret;
             }
         }
+        /// <summary>
+        /// 利用柯特斯公式积分计算arctan(x)
+        /// <para>速度一般</para>
+        /// </summary>
+        /// <param name="_x"></param>
+        /// <param name="digit"></param>
+        /// <param name="pb">进度条（可选）</param>
+        /// <returns></returns>
         public SKSpecialDecimal Cotes(double x, int digit, System.Windows.Forms.ProgressBar pb = null)
         {
             return Cotes(new SKSpecialDecimal(x, digit), digit, pb);
         }
 
+        /// <summary>
+        /// 龙贝格算法，速度还可以
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="digit">有效位数</param>
+        /// <param name="pb">进度条（可选）</param>
+        /// <returns></returns>
+        public SKSpecialDecimal Romberg(SKSpecialDecimal _x, int digit, System.Windows.Forms.ProgressBar pb = null)
+        {
+            if (digit <= 0 || digit > LIMIT_DIGIT)
+                return new SKSpecialDecimal();
+            if (_x.compare_to(0) == 0)
+                return new SKSpecialDecimal(0);
+            SKSpecialDecimal x = new SKSpecialDecimal(_x);
+            x[digit + APPEND_ADD] = (byte)0;
+            int cmp_1_ans = x.compare_to(1);
+            if (!x.get_positive())
+            {
+                x.inverse();
+                SKSpecialDecimal ret = Romberg(x, digit, pb);
+                ret.inverse();
+                return ret;
+            }
+            else if (cmp_1_ans > 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal((pi / (new SKSpecialDecimal(2, x.get_digit())) - Romberg((new SKSpecialDecimal(1, x.get_digit())) / x, digit, pb)));
+                ret.cut(digit);
+                return ret;
+            }
+            else if (cmp_1_ans == 0)
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal(pi) / new SKSpecialDecimal(4, digit + APPEND_ADD);
+                ret.cut(digit);
+                return ret;
+            }
+            else
+            {
+                SKSpecialDecimal ret = new SKSpecialDecimal(0);
+                SKSpecialDecimal h = new SKSpecialDecimal(x);
+                List<SKSpecialDecimal> last_Tk_list = new List<SKSpecialDecimal>();
+                List<SKSpecialDecimal> this_Tk_list = new List<SKSpecialDecimal>();
+                last_Tk_list.Add(((new SKSpecialDecimal(1, x.get_digit())) + arctan_1(x)) * h * (new SKSpecialDecimal(0.5, x.get_digit())));
+                this_Tk_list.Add(calculate_T0(x,h,last_Tk_list[0]));
+                this_Tk_list.Add(calculate_T_m_k(this_Tk_list[0],last_Tk_list[0],1));
+                h = h * (new SKSpecialDecimal(0.5,h.get_digit()));
+                int k = 2;
+                if (pb != null)
+                {
+                    pb.Value = 0;
+                    pb.Maximum = digit;
+                }
+                while (true)
+                {
+                    last_Tk_list.Clear();
+                    last_Tk_list = this_Tk_list;
+                    this_Tk_list = new List<SKSpecialDecimal>();
+                    this_Tk_list.Add(calculate_T0(x,h,last_Tk_list[0]));
+                    h = h * (new SKSpecialDecimal(0.5,h.get_digit()));
+                    for (int m = 1; m <= k; m++)
+                        this_Tk_list.Add(calculate_T_m_k(this_Tk_list[m-1],last_Tk_list[m-1],m));
+                    SKSpecialDecimal eps = new SKSpecialDecimal(1);
+                    eps.mul_10(this_Tk_list[k].get_exp() - digit - 2);
+                    SKSpecialDecimal diff = SKSpecialDecimal.abs(SKSpecialDecimal.abs(this_Tk_list[k]) - SKSpecialDecimal.abs(this_Tk_list[k - 1]));
+                    if (diff.compare_to(eps) < 0)
+                    {
+                        ret = new SKSpecialDecimal(this_Tk_list[k]);
+                        break;
+                    }
+                    SKSpecialDecimal watch = this_Tk_list[k];
+                    k++;
+                    if (pb != null)
+                    {
+                        pb.Value = (Math.Abs(diff.get_exp()) > digit) ? digit : (int)Math.Abs(diff.get_exp());
+                    }
+                }
+                ret.cut(digit);
+                return ret;
+            }
+        }
+        /// <summary>
+        /// 龙贝格算法，速度还可以
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="digit">有效位数</param>
+        /// <param name="pb">进度条（可选）</param>
+        /// <returns></returns>
+        public SKSpecialDecimal Romberg(double x, int digit, System.Windows.Forms.ProgressBar pb = null)
+        {
+            return Romberg(new SKSpecialDecimal(x, digit+APPEND_ADD), digit, pb);
+        }
 
         /// <summary>
         /// 返回arctanx一阶导的取值
@@ -397,7 +498,45 @@ namespace SKArctanX
             //return new SKSpecialDecimal(_ret, _x.get_digit() + APPEND_ADD);
             return (new SKSpecialDecimal(1, _x.get_digit() + APPEND_ADD)) / (SKSpecialDecimal.pow(_x, 2) + (new SKSpecialDecimal(1, _x.get_digit() + SIMPSON_LIMIT + APPEND_ADD)));
         }
-
+        /// <summary>
+        /// 计算龙贝格算法的T0
+        /// </summary>
+        /// <param name="_x">积分终止值</param>
+        /// <param name="_h">上一次的h</param>
+        /// <param name="_last_T0">上一次的积分值</param>
+        /// <returns></returns>
+        private SKSpecialDecimal calculate_T0(SKSpecialDecimal _x, SKSpecialDecimal _h,SKSpecialDecimal _last_T0)
+        {
+            SKSpecialDecimal ret;
+            ret = (new SKSpecialDecimal(0.5, _last_T0.get_digit()) * _last_T0);
+            SKSpecialDecimal h_div_2 = _h * (new SKSpecialDecimal(0.5, _h.get_digit()));
+            SKSpecialDecimal _n = _x / _h;
+            int n = SKSpecialDecimal.floor(_n);
+            SKSpecialDecimal acc = new SKSpecialDecimal(0);
+            SKSpecialDecimal x_now = new SKSpecialDecimal(h_div_2);
+            for (int i = 0; i < n; i++)
+            {
+                acc = acc + arctan_1(x_now);
+                x_now = x_now + _h;
+            }
+            acc = acc * h_div_2;
+            ret = ret + acc;
+            return ret;
+        }
+        /// <summary>
+        /// 计算龙贝格算法中的Tmk
+        /// </summary>
+        /// <param name="_T_ms1_ka1">T(m-1)(k+1)</param>
+        /// <param name="_T_ms1_k">T(m-1)k</param>
+        /// <returns></returns>
+        private SKSpecialDecimal calculate_T_m_k(SKSpecialDecimal _T_ms1_ka1, SKSpecialDecimal _T_ms1_k,int m)
+        {
+            SKSpecialDecimal _4_m = SKSpecialDecimal.pow(new SKSpecialDecimal(4,_T_ms1_ka1.get_digit()),m);
+            SKSpecialDecimal _4_m_s1 = _4_m - (new SKSpecialDecimal(1, _4_m.get_digit() + APPEND_ADD));
+            SKSpecialDecimal tmp1 = _4_m / _4_m_s1;
+            SKSpecialDecimal tmp2 = (new SKSpecialDecimal(1, _4_m.get_digit() + APPEND_ADD)) / _4_m_s1;
+            return tmp1 * _T_ms1_ka1 - tmp2 * _T_ms1_k;
+        }
         /// <summary>
         /// 常数与默认增加的位数
         /// </summary>
