@@ -18,27 +18,6 @@ namespace SKArctanX
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            SKSpecialDecimal a = new SKSpecialDecimal("0.5");
-            DateTime dt = DateTime.Now;
-            SKAlgorithm ska = new SKAlgorithm();
-            textBox_x.Text += ska.Talor(-4, 20, progressBar1).ToString() + "\r\n";
-            progressBar1.Value = 0;
-            textBox_x.Text += ska.Romberg(-4, 20, progressBar1).ToString() + "\r\n";
-            //textBox1.Text += ska.Cotes(-1.1, 20, progressBar1).ToString() + "\r\n";
-            //progressBar1.Value = 0;
-            //textBox1.Text += ska.Simpson(-1.1, 16, progressBar1).ToString() + "\r\n";
-            //progressBar1.Value = 0;
-            DateTime dt2 = DateTime.Now;
-            textBox_x.Text += "\r\n耗时：" + (dt2 - dt).TotalSeconds.ToString();
-        }
-
         private void button1_Click_1(object sender, EventArgs e)
         {
             if (checkBox1.Checked || checkBox2.Checked || checkBox3.Checked || checkBox4.Checked)
